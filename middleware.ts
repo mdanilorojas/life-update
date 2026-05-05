@@ -18,9 +18,9 @@ export default auth((req) => {
     return Response.redirect(new URL("/login", req.nextUrl.origin));
   }
 
-  // If user is logged in and trying to access auth pages, redirect to dashboard
+  // If user is logged in and trying to access auth pages, redirect to daily
   if (isLoggedIn && isAuthPage) {
-    return Response.redirect(new URL("/dashboard", req.nextUrl.origin));
+    return Response.redirect(new URL("/daily", req.nextUrl.origin));
   }
 
   return null;

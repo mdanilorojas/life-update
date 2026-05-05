@@ -3,6 +3,10 @@ import Credentials from "next-auth/providers/credentials";
 import prisma from "./prisma";
 import { compare } from "bcryptjs";
 
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error("NEXTAUTH_SECRET environment variable is required");
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Credentials({
