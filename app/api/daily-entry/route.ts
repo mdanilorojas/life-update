@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { CURRENT_USER_ID } from "@/lib/constants";
+import { isAuthenticated } from "@/lib/session";
 import prisma from "@/lib/prisma";
 
 // Validation helper
@@ -41,15 +42,15 @@ function validateDailyEntryData(data: any) {
 export async function GET(request: NextRequest) {
   try {
     // Check authentication
-    const session = await auth();
-    if (!session || !session.user?.id) {
+    const authenticated = await isAuthenticated();
+    if (!authenticated) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
       );
     }
 
-    const userId = session.user.id;
+    const userId = CURRENT_USER_ID;
 
     // Get today's date (YYYY-MM-DD)
     const today = new Date().toISOString().split("T")[0];
@@ -82,15 +83,15 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    const session = await auth();
-    if (!session || !session.user?.id) {
+    const authenticated = await isAuthenticated();
+    if (!authenticated) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
       );
     }
 
-    const userId = session.user.id;
+    const userId = CURRENT_USER_ID;
 
     // Parse request body
     const body = await request.json();
