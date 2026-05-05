@@ -1,30 +1,36 @@
-import { auth } from "@/lib/auth";
+// /middleware.ts
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export default auth((req) => {
-  const isLoggedIn = !!req.auth;
-  const pathname = req.nextUrl.pathname;
+export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const sessionCookie = request.cookies.get("life-update-session");
+  const isAuthenticated = !!sessionCookie;
 
-  const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/signup");
+  // Public routes that don't require authentication
+  const isLoginPage = pathname === "/login";
   const isApiAuth = pathname.startsWith("/api/auth");
-  const isPublic = pathname === "/" || pathname.startsWith("/public");
+  const isPublicRoute = pathname === "/" || pathname.startsWith("/public") || pathname.startsWith("/_next");
 
-  // Allow API auth routes and public routes
-  if (isApiAuth || isPublic) {
-    return null;
+  // Allow public routes
+  if (isPublicRoute || isApiAuth) {
+    return NextResponse.next();
   }
 
-  // If user is not logged in and trying to access protected routes
-  if (!isLoggedIn && !isAuthPage) {
-    return Response.redirect(new URL("/login", req.nextUrl.origin));
+  // Redirect to login if not authenticated
+  if (!isAuthenticated && !isLoginPage) {
+    const loginUrl = new URL("/login", request.url);
+    return NextResponse.redirect(loginUrl);
   }
 
-  // If user is logged in and trying to access auth pages, redirect to daily
-  if (isLoggedIn && isAuthPage) {
-    return Response.redirect(new URL("/daily", req.nextUrl.origin));
+  // Redirect to dashboard if authenticated and trying to access login
+  if (isAuthenticated && isLoginPage) {
+    const dailyUrl = new URL("/daily", request.url);
+    return NextResponse.redirect(dailyUrl);
   }
 
-  return null;
-});
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [
@@ -33,8 +39,7 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public folder
      */
-    "/((?!_next/static|_next/image|favicon.ico|public).*)",
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };
