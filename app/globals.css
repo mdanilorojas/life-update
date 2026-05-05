@@ -92,12 +92,12 @@
   --sidebar-ring: oklch(0.556 0 0);
 
   /* Status colors: dark blue/purple brutal honesty theme */
-  --status-crushing: oklch(0.577 0.245 27.325); /* Red for failing */
-  --status-ahead: oklch(0.556 0.223 142.495); /* Green for exceeding */
+  --status-crushing: oklch(0.556 0.223 142.495); /* Neon green for exceeding */
+  --status-ahead: oklch(0.619 0.241 142.495); /* Green for ahead */
   --status-on-track: oklch(0.708 0.210 258.325); /* Blue for healthy progress */
   --status-warning: oklch(0.661 0.245 62.325); /* Amber for caution */
   --status-danger: oklch(0.619 0.241 18.325); /* Orange for risk */
-  --status-critical: oklch(0.470 0.245 27.325); /* Dark red for immediate action */
+  --status-critical: oklch(0.470 0.245 27.325); /* Dark red for failing */
 }
 
 @layer base {
