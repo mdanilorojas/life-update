@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { isAuthenticated } from "@/lib/session";
 
 export default async function Home() {
-  const session = await auth();
+  const authenticated = await isAuthenticated();
 
   // If user is logged in, redirect to daily
-  if (session) {
+  if (authenticated) {
     redirect("/daily");
   }
 
