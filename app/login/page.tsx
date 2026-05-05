@@ -36,14 +36,15 @@ export default function LoginPage() {
       // Success - redirect to dashboard
       router.push("/daily");
       router.refresh();
-    } catch (err) {
+      setIsLoading(false);
+    } catch {
       setError("An error occurred. Please try again.");
       setIsLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-950 p-4">
+    <main className="min-h-screen flex items-center justify-center bg-zinc-950 p-4">
       <Card className="w-full max-w-sm bg-zinc-900 border-zinc-800 shadow-xl">
         <div className="p-8">
           <div className="mb-8">
@@ -57,7 +58,7 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="p-3 bg-red-950 border border-red-900 rounded-md">
+              <div role="alert" className="p-3 bg-red-950 border border-red-900 rounded-md">
                 <p className="text-sm text-red-200">{error}</p>
               </div>
             )}
@@ -96,6 +97,6 @@ export default function LoginPage() {
           </p>
         </div>
       </Card>
-    </div>
+    </main>
   );
 }
