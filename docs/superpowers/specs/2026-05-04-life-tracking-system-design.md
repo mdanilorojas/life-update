@@ -24,9 +24,10 @@ Life Update is a **brutally honest life transformation tracking system** that he
 - Name: Danilo
 - Age: 30s
 - Background: UX/UI Designer + Systems Engineer, 10+ years experience
-- IQ: 120-128 (high intelligence, capable of intense work)
 - Personality: Disciplined when given clear direction, needs "north star"
 - Current State: Somewhat lost, stressed (7.5/10), moderately satisfied (5/10)
+- Health History: Shoulder issues, cervical problems, digestive issues, stress-induced relapses
+- Active Projects: EnRegla, TE/portfolio, potential new AI products
 - Goal: 5-10x life improvement in 5 years (physical, financial, professional, mental, relationships)
 
 ---
@@ -161,29 +162,184 @@ See `prisma/schema.prisma` for complete schema. Key tables:
 
 ## Core Features
 
-### 1. Daily Logging (Mobile-First)
+### 1. Mission Control (PRIMARY VIEW)
 
-**Purpose:** Quick entry of daily metrics before bed.
+**Purpose:** Tell user EXACTLY what to do today. No analysis paralysis.
+
+**Layout:**
+```
+┌─────────────────────────────────────────────────┐
+│  MISSION CONTROL - Sunday, May 4, 2026         │
+├─────────────────────────────────────────────────┤
+│                                                 │
+│  🎯 TODAY YOU WIN IF:                           │
+│  ✓ Log 4+ hours deep work on EnRegla          │
+│  ✓ Go to gym (shoulder rehab + legs)          │
+│  ✓ Stay clean (no alcohol/porn)                │
+│                                                 │
+│  ⚠️ PRIMARY RISK:                               │
+│  Sleep 6h last night + stress 8/10 =           │
+│  HIGH RISK of relapse tonight.                  │
+│  → Go to bed before 11pm.                       │
+│                                                 │
+│  🚫 DO NOT:                                     │
+│  • Work past 8pm (burnout risk)                │
+│  • Skip meals (low energy → poor decisions)    │
+│                                                 │
+│  📊 PROGRESS SNAPSHOT:                          │
+│  Week 18/52 • 78% on track • 32 day streak     │
+│                                                 │
+│        [LOG TODAY]  [FULL DASHBOARD]            │
+└─────────────────────────────────────────────────┘
+```
+
+**Algorithm:**
+1. Analyze last 7 days (sleep, stress, energy, pain)
+2. Check project deadlines (EnRegla, TE, etc.)
+3. Identify highest-value task for today
+4. Calculate physiological risk score
+5. Generate 3 win conditions + 1 primary risk + 2 don'ts
+
+**This is the DEFAULT landing page after login.**
+
+### 2. Daily Logging (20 Second Target)
+
+**Purpose:** Absolute minimum data needed. Everything else is weekly/monthly.
+
+**Fields (7 total):**
+1. **Energy** (1-10 slider)
+2. **Stress** (1-10 slider)
+3. **Physical pain** (Yes/No + location dropdown if yes)
+4. **Trained today** (Yes/No)
+5. **Deep work hours** (number input, 0-12)
+6. **Clean today** (checkbox: alcohol/porn/tobacco)
+7. **Quick note** (optional, 1 line)
 
 **UX Flow:**
-1. User opens `/daily` (bookmark on phone home screen)
-2. Form is pre-filled with yesterday's values
-3. User adjusts what changed today (weight, sleep, habits, etc.)
-4. Tap "Save" → Confetti if streak continues → Redirect to dashboard
+1. User opens `/daily` (or PWA)
+2. All fields visible at once (no tabs/accordion)
+3. Pre-filled with smart defaults (yesterday's values)
+4. Type/tap → Auto-save on blur
+5. "Done" button → Confetti if streak → Redirect to Mission Control
 
-**Design Principles:**
-- **Fast:** < 60 seconds to complete
-- **Forgiving:** All fields optional except date
-- **Visual:** Large touch targets, clear yes/no for habits
-- **Motivating:** Streak counter prominent, celebration on save
+**Design:**
+- **Target:** 20 seconds to complete
+- **Mobile-optimized:** Large sliders, single screen
+- **Forgiving:** Can skip any field
+- **Smart:** If energy < 4 and stress > 7, trigger risk warning for tomorrow
 
 **Technical:**
-- Client-side form state (React useState)
-- Optimistic UI updates
-- POST /api/entries/daily with upsert logic
-- Validation: basic (date required, numbers in range)
+- Debounced auto-save (save as user types)
+- Optimistic updates
+- POST /api/entries/daily (upsert)
+- Minimal validation
 
-### 2. Dashboard (Desktop + Mobile)
+### 3. Health Risk Dashboard
+
+**Purpose:** Prevent burnout and injury BEFORE they happen. Not "soft", just smart.
+
+**Physiological Risk Score (0-100):**
+```typescript
+riskScore = 0
+
+// Sleep deprivation (0-40 points)
+if (avgSleep7d < 6.5) riskScore += 40
+else if (avgSleep7d < 7) riskScore += 20
+else if (avgSleep7d < 7.5) riskScore += 10
+
+// Stress accumulation (0-30 points)
+if (avgStress7d >= 8) riskScore += 30
+else if (avgStress7d >= 7) riskScore += 20
+else if (avgStress7d >= 6) riskScore += 10
+
+// Physical pain (0-20 points)
+if (painDays7d >= 4) riskScore += 20
+else if (painDays7d >= 2) riskScore += 10
+
+// Low energy (0-10 points)
+if (avgEnergy7d < 5) riskScore += 10
+else if (avgEnergy7d < 6) riskScore += 5
+
+Risk Levels:
+0-25: GREEN (optimal)
+26-50: YELLOW (monitor closely)
+51-75: ORANGE (elevated risk - consider rest day)
+76-100: RED (high risk - injury/burnout/relapse imminent)
+```
+
+**Dashboard Section:**
+```
+┌─────────────────────────────────────┐
+│  HEALTH RISK: 68 (ORANGE)           │
+│  ━━━━━━━━━━━━━━━━━━━━━━░░░          │
+│                                     │
+│  ⚠️ RISK FACTORS:                   │
+│  • Sleep: 6.2h avg (need 7.5h+)    │
+│  • Stress: 7.8/10 avg (high)       │
+│  • Shoulder pain: 3/7 days         │
+│                                     │
+│  💡 RECOMMENDATION:                 │
+│  Take active recovery day:          │
+│  • Light walk instead of gym       │
+│  • No deep work past 6pm           │
+│  • Prioritize 8h sleep tonight     │
+│                                     │
+│  Your call. Data says elevated     │
+│  risk. Decide accordingly.          │
+└─────────────────────────────────────┘
+```
+
+**Key:** System INFORMS risk, doesn't enforce "mode". User decides whether to push or recover.
+
+### 4. Project Tracking
+
+**Purpose:** Track real projects, not generic "professional development".
+
+**Projects Table:**
+```typescript
+model Project {
+  id              String   @id @default(cuid())
+  userId          String
+  name            String   // "EnRegla", "TE Portfolio", etc.
+  status          String   // "active", "paused", "completed"
+  targetRevenue   Float?   // Monthly revenue goal
+  currentRevenue  Float?   // Current MRR
+  hoursThisWeek   Float?   
+  hoursGoal       Float?   // Weekly hour target
+  nextMilestone   String?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  user            User @relation(fields: [userId], references: [id])
+  
+  @@map("projects")
+}
+```
+
+**Dashboard Card:**
+```
+┌──────────────────────────────────┐
+│  🚀 PROJECTS                     │
+├──────────────────────────────────┤
+│  EnRegla                         │
+│  18h this week / 20h goal        │
+│  $0 MRR → $500 MRR target       │
+│  🔵 On track                     │
+├──────────────────────────────────┤
+│  TE Portfolio                    │
+│  4h this week / 10h goal         │
+│  🟡 Behind - need 6h more        │
+├──────────────────────────────────┤
+│  [+ Add Project]                 │
+└──────────────────────────────────┘
+```
+
+**Integration with Mission Control:**
+- Highest-priority project task shows in "Win conditions"
+- If project behind schedule, surfaces in primary risk
+
+### 5. Standard Dashboard (Desktop + Mobile)
 
 **Purpose:** Truth at a glance. Where am I vs where I should be?
 
@@ -269,15 +425,21 @@ else                             → CRITICAL (dark red)
 **Overall Progress Score:**
 ```typescript
 weights = {
-  physical: 0.15,
-  financial: 0.30,    // Highest weight (user priority)
-  professional: 0.25,
-  mental: 0.15,
-  habits: 0.15
+  health: 0.30,       // HIGHEST - If body fails, everything fails
+  financial: 0.25,    // Critical for stability and freedom
+  professional: 0.20, // Products and career growth
+  mental: 0.15,       // Energy, clarity, stress management
+  relationships: 0.10 // Important but not urgent
 }
 
 overallScore = Σ (categoryScore × weight)
 ```
+
+**Rationale for Health Priority:**
+- User has history of physical issues (shoulder, cervical, digestive)
+- Stress-induced relapses show body-mind connection is critical
+- If health collapses, execution becomes impossible
+- This is strategic, not soft - protecting the execution engine
 
 ### 4. Analytics & Visualizations
 
@@ -662,7 +824,30 @@ If those assumptions hold, this system will work.
 
 ---
 
-**Document Version:** 1.0  
+**Document Version:** 1.1  
 **Last Updated:** May 4, 2026  
 **Author:** Claude Sonnet 4.5  
 **Status:** Ready for Implementation
+
+---
+
+## Changelog v1.0 → v1.1
+
+**Strategic Changes:**
+1. **Health Priority Elevated** - Changed weights to Health 30% (was 15%), recognizing that physical collapse = execution collapse
+2. **Mission Control Added** - New primary landing page that tells user exactly what to do today (3 win conditions + primary risk + 2 don'ts)
+3. **Daily Log Simplified** - Reduced from 60s to 20s target, only 7 core fields: energy, stress, pain, trained, deep work hours, clean status, note
+4. **Health Risk Dashboard** - Physiological risk score (0-100) that WARNS about burnout/injury risk without enforcing "soft mode"
+5. **Project Tracking** - Real projects (EnRegla, TE, etc.) tracked with hours/revenue/milestones, not generic "professional development"
+6. **Removed IQ Reference** - Not operationally useful, can create unnecessary pressure
+
+**Tone Maintained:**
+- Still brutally honest (status colors, projections, no sugarcoating)
+- Risk warnings inform, don't protect
+- User decides whether to push or recover
+- Numbers don't lie, system doesn't coddle
+
+**User Profile Updated:**
+- Added health history (shoulder, cervical, digestive, stress-induced relapses)
+- Added active projects (EnRegla, TE/portfolio)
+- Removed IQ metric

@@ -1,0 +1,206 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USER MODEL
+// ============================================
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relaciones
+  dailyEntries   DailyEntry[]
+  weeklyEntries  WeeklyEntry[]
+  monthlyEntries MonthlyEntry[]
+  planSnapshots  PlanSnapshot[]
+  projects       Project[]
+
+  @@map("users")
+}
+
+// ============================================
+// TRACKING ENTRIES
+// ============================================
+
+model DailyEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime @db.Date
+
+  // Core metrics (20 second log)
+  energy_level           Int?     // 1-10
+  stress_level           Int?     // 1-10
+  physical_pain          Boolean  @default(false)
+  pain_location          String?  // "shoulder", "neck", "back", etc.
+  trained_today          Boolean  @default(false)
+  deep_work_hours        Float?   // 0-12
+  clean_today            Boolean  @default(true)  // No alcohol/porn/tobacco
+  quick_note             String?
+
+  // Extended metrics (optional, for analytics)
+  weight_kg              Float?
+  sleep_hours            Float?
+  exercise_minutes       Int?
+  food_quality_score     Int?     // 1-5
+
+  // Habit breakdown (detailed)
+  alcohol_consumed       Boolean  @default(false)
+  porn_consumed          Boolean  @default(false)
+  tobacco_consumed       Boolean  @default(false)
+  meditation_completed   Boolean  @default(false)
+  meditation_minutes     Int?
+
+  // Emotional detail
+  day_satisfaction       Int?     // 1-10
+
+  // Metadata
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  // Relaciones
+  user                   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId, date])
+  @@map("daily_entries")
+}
+
+model WeeklyEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  weekStart DateTime @db.Date // Lunes de la semana
+
+  // Físico
+  body_fat_percentage    Float?
+  waist_cm               Float?
+  chest_cm               Float?
+  arms_cm                Float?
+
+  // Profesional
+  productive_hours       Float?
+  projects_advanced      Int?
+
+  // Notas
+  notes                  String?
+
+  // Metadata
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  user                   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, weekStart])
+  @@index([userId, weekStart])
+  @@map("weekly_entries")
+}
+
+model MonthlyEntry {
+  id          String   @id @default(cuid())
+  userId      String
+  month       DateTime @db.Date // Primer día del mes
+
+  // Financiero
+  income_usd           Float?
+  expenses_usd         Float?
+  savings_usd          Float?
+  total_savings_usd    Float?
+  debt_usd             Float?
+
+  // Profesional
+  new_skills_learned   Int?
+  certifications_earned Int?
+  products_launched    Int?
+
+  // Relaciones
+  family_quality_score     Int? // 1-10
+  romantic_quality_score   Int? // 1-10
+  social_quality_score     Int? // 1-10
+
+  // Notas
+  notes                    String?
+
+  // Metadata
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  user                     User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, month])
+  @@index([userId, month])
+  @@map("monthly_entries")
+}
+
+// ============================================
+// PROJECTS (Real work tracking)
+// ============================================
+
+model Project {
+  id              String   @id @default(cuid())
+  userId          String
+
+  // Basic info
+  name            String   // "EnRegla", "TE Portfolio", etc.
+  description     String?
+  status          String   @default("active") // "active", "paused", "completed", "archived"
+
+  // Financial goals
+  targetRevenue   Float?   // Monthly revenue goal (MRR)
+  currentRevenue  Float?   // Current MRR
+
+  // Time tracking
+  hoursThisWeek   Float?   @default(0)
+  hoursGoal       Float?   // Weekly hour target
+  totalHours      Float?   @default(0) // Lifetime hours
+
+  // Milestones
+  nextMilestone   String?  // "Launch MVP", "First paying customer", etc.
+  milestoneDate   DateTime? @db.Date
+
+  // Priority
+  priority        Int?     @default(2) // 1 = highest, 5 = lowest
+
+  // Notes
+  notes           String?
+
+  // Metadata
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@map("projects")
+}
+
+// ============================================
+// PLAN SNAPSHOTS (historial de cambios al plan)
+// ============================================
+
+model PlanSnapshot {
+  id          String   @id @default(cuid())
+  userId      String
+
+  // Tipo de plan
+  planType    String   // 'baseline' | '1-year' | '5-year'
+
+  // Contenido del .md en ese momento
+  content     String   @db.Text
+
+  // Metadata
+  createdAt   DateTime @default(now())
+  reason      String?  // "Initial plan" | "Adjusted goals - ahead of schedule" | etc
+
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, planType, createdAt])
+  @@map("plan_snapshots")
+}
