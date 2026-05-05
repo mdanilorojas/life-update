@@ -1,10 +1,8 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { auth } from "@/lib/auth";
 
-export function middleware(request: NextRequest) {
-  const sessionCookie = request.cookies.get("authjs.session-token");
-  const isLoggedIn = !!sessionCookie;
-  const pathname = request.nextUrl.pathname;
+export default auth((req) => {
+  const isLoggedIn = !!req.auth;
+  const pathname = req.nextUrl.pathname;
 
   const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/signup");
   const isApiAuth = pathname.startsWith("/api/auth");
@@ -12,21 +10,21 @@ export function middleware(request: NextRequest) {
 
   // Allow API auth routes and public routes
   if (isApiAuth || isPublic) {
-    return NextResponse.next();
+    return null;
   }
 
   // If user is not logged in and trying to access protected routes
   if (!isLoggedIn && !isAuthPage) {
-    return NextResponse.redirect(new URL("/login", request.nextUrl.origin));
+    return Response.redirect(new URL("/login", req.nextUrl.origin));
   }
 
   // If user is logged in and trying to access auth pages, redirect to dashboard
   if (isLoggedIn && isAuthPage) {
-    return NextResponse.redirect(new URL("/dashboard", request.nextUrl.origin));
+    return Response.redirect(new URL("/dashboard", req.nextUrl.origin));
   }
 
-  return NextResponse.next();
-}
+  return null;
+});
 
 export const config = {
   matcher: [

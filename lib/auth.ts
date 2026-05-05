@@ -1,11 +1,9 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import prisma from "./prisma";
 import { compare } from "bcryptjs";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
   providers: [
     Credentials({
       name: "Credentials",
@@ -26,9 +24,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        // For now, we'll implement a simple password check
-        // In production, you'd use bcrypt to compare hashed passwords
-        // This is a placeholder - actual implementation will depend on password storage
         if (!user.password) {
           return null;
         }
