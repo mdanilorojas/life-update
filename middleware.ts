@@ -7,6 +7,10 @@ export async function middleware(request: NextRequest) {
   const sessionCookie = request.cookies.get("life-update-session");
   const isAuthenticated = !!sessionCookie;
 
+  // Note: We only check cookie existence here because middleware runs at the edge.
+  // Actual session validation (expiration, server-side store lookup) happens in
+  // API routes and server components via isAuthenticated() from lib/session.ts
+
   // Public routes that don't require authentication
   const isLoginPage = pathname === "/login";
   const isApiAuth = pathname.startsWith("/api/auth");
