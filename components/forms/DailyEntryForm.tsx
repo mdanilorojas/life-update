@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,16 @@ export function DailyEntryForm() {
     type: "success" | "error";
     text: string;
   } | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -52,7 +62,7 @@ export function DailyEntryForm() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
+        const error = await response.json().catch(() => ({ error: "Network error" }));
         throw new Error(error.error || "Failed to save entry");
       }
 
@@ -74,7 +84,7 @@ export function DailyEntryForm() {
       });
 
       // Clear success message after 3 seconds
-      setTimeout(() => setMessage(null), 3000);
+      timeoutRef.current = setTimeout(() => setMessage(null), 3000);
     } catch (error) {
       setMessage({
         type: "error",
@@ -231,12 +241,14 @@ export function DailyEntryForm() {
           max="12"
           step="0.5"
           value={formData.deep_work_hours}
-          onChange={(e) =>
+          onChange={(e) => {
+            const parsedHours = parseFloat(e.target.value) || 0;
+            const clampedHours = Math.max(0, Math.min(12, parsedHours));
             setFormData({
               ...formData,
-              deep_work_hours: parseFloat(e.target.value) || 0,
-            })
-          }
+              deep_work_hours: clampedHours,
+            });
+          }}
           className="bg-zinc-800 border-zinc-700 text-zinc-50 text-lg h-12"
         />
         <p className="text-xs text-zinc-500">
